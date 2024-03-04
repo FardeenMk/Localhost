@@ -1,17 +1,18 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.9;
 
-//import "hardhat/console.sol";
-
 contract Assessment {
-    address payable public owner;
+    address public owner;
     uint256 public balance;
 
     event Deposit(uint256 amount);
     event Withdraw(uint256 amount);
+    event PinChanged(address account);
+    event InflationCalculated(uint256 inflatedAmount);
+    event CompoundInterestCalculated(uint256 compoundInterest);
 
-    constructor(uint initBalance) payable {
-        owner = payable(msg.sender);
+    constructor(uint256 initBalance) payable {
+        owner = msg.sender;
         balance = initBalance;
     }
 
@@ -20,7 +21,7 @@ contract Assessment {
     }
 
     function deposit(uint256 _amount) public payable {
-        uint _previousBalance = balance;
+        uint256 _previousBalance = balance;
 
         // make sure this is the owner
         require(msg.sender == owner, "You are not the owner of this account");
@@ -40,7 +41,7 @@ contract Assessment {
 
     function withdraw(uint256 _withdrawAmount) public {
         require(msg.sender == owner, "You are not the owner of this account");
-        uint _previousBalance = balance;
+        uint256 _previousBalance = balance;
         if (balance < _withdrawAmount) {
             revert InsufficientBalance({
                 balance: balance,
@@ -56,5 +57,23 @@ contract Assessment {
 
         // emit the event
         emit Withdraw(_withdrawAmount);
+    }
+
+    function changePin() public {
+        require(msg.sender == owner, "Only the owner can change the PIN");
+        // Emit event
+        emit PinChanged(msg.sender);
+    }
+
+    function calculateInflation(uint256 _amount, uint256 _years, uint256 _inflationRate) public pure returns(uint256) {
+        // Calculate inflated amount
+        uint256 inflatedAmount = _amount * (100 + _inflationRate) ** _years / 100;
+        return inflatedAmount;
+    }
+
+    function calculateCompoundInterest(uint256 _principal, uint256 _interestRate, uint256 _years, uint256 _compoundFrequency) public pure returns(uint256) {
+        // Calculate compound interest
+        uint256 compoundInterest = _principal * ((1 + (_interestRate / 100) / _compoundFrequency) ** (_compoundFrequency * _years)) - _principal;
+        return compoundInterest;
     }
 }
